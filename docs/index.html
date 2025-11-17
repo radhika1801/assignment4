@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title></title>
+</head>
+
+<body>
+    <!-- we'll use a canvas html component -->
+    <canvas id="board" width="600" height="400" style="border:1px solid #ccc"></canvas>
+    
+    <div class="toolbar">
+        <input type="color" id="colorPicker" />
+        <input type="range" id="brushSize" min="1" max="20" />
+        <button id="clear">🧹 Clear</button>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>
