@@ -1,24 +1,102 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title></title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Digital Rangoli - Create patterns together</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tomorrow&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
 </head>
-
 <body>
-    <!-- we'll use a canvas html component -->
-    <canvas id="board" width="600" height="400" style="border:1px solid #ccc"></canvas>
-    
-    <div class="toolbar">
-        <input type="color" id="colorPicker" />
-        <input type="range" id="brushSize" min="1" max="20" />
-        <button id="clear">🧹 Clear</button>
-    </div>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <h1 class="title">Digital Rangoli</h1>
+      <p class="subtitle">Create patterns together</p>
+    </header>
 
-    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-    <script src="./script.js"></script>
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Canvas Section -->
+      <section class="canvas-section">
+        <canvas id="rangoliCanvas"></canvas>
+      </section>
+
+      <!-- Sidebar Controls -->
+      <aside class="sidebar">
+        <!-- Colors - Centered in Strip -->
+        <div class="color-strip">
+          <div id="colorPalette" class="color-palette-vertical"></div>
+        </div>
+
+        <!-- Control Panel -->
+        <div class="controls-panel">
+          <!-- Brush Size -->
+          <div class="control-section">
+            <label class="control-label">
+              Brush <span id="brushValue">15</span>
+            </label>
+            <input type="range" class="slider" id="brushSize" min="5" max="40" value="15">
+          </div>
+
+          <!-- Symmetry -->
+          <div class="control-section">
+            <label class="control-label">Symmetry</label>
+            <div class="symmetry-grid">
+              <button class="symmetry-btn" data-symmetry="4">4</button>
+              <button class="symmetry-btn active" data-symmetry="8">8</button>
+              <button class="symmetry-btn" data-symmetry="12">12</button>
+              <button class="symmetry-btn" data-symmetry="16">16</button>
+            </div>
+          </div>
+
+          <!-- Pattern -->
+          <div class="control-section">
+            <label class="control-label">Pattern</label>
+            <div class="pattern-grid">
+              <button class="pattern-btn active" data-pattern="dot" title="Dot">●</button>
+              <button class="pattern-btn" data-pattern="flower" title="Flower">✿</button>
+              <button class="pattern-btn" data-pattern="star" title="Star">★</button>
+              <button class="pattern-btn" data-pattern="heart" title="Heart">♥</button>
+            </div>
+          </div>
+
+          <!-- Glow -->
+          <div class="control-section">
+            <label class="control-label">
+              Glow <span id="glowValue">70%</span>
+            </label>
+            <input type="range" class="slider" id="glowSlider" min="0" max="100" value="70">
+          </div>
+
+          <!-- Toggles -->
+          <div class="control-section toggles">
+            <label class="checkbox-label">
+              <input type="checkbox" id="guidesToggle" checked>
+              <span class="checkbox-custom"></span>
+              <span>Show guides</span>
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="particlesToggle" checked>
+              <span class="checkbox-custom"></span>
+              <span>Particles</span>
+            </label>
+          </div>
+
+          <!-- Actions -->
+          <div class="actions">
+            <button class="btn btn-secondary" id="undoBtn">Undo</button>
+            <button class="btn btn-secondary" id="clearBtn">Clear</button>
+            <button class="btn btn-primary" id="saveBtn">Save</button>
+          </div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
+  <script src="./script.js"></script>
 </body>
-
 </html>
