@@ -6,7 +6,7 @@
   <title>Digital Rangoli - Create patterns together</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Tomorrow&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bellefair&family=Poiret+One&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
@@ -24,15 +24,37 @@
         <canvas id="rangoliCanvas"></canvas>
       </section>
 
-      <!-- Sidebar Controls -->
-      <aside class="sidebar">
-        <!-- Colors - Centered in Strip -->
-        <div class="color-strip">
-          <div id="colorPalette" class="color-palette-vertical"></div>
+      <!-- Color Strip - Always Visible -->
+      <div class="color-strip">
+        <div id="colorPalette" class="color-palette-vertical">
+          <!-- Colors will be added dynamically here -->
         </div>
+        <!-- Color Picker Button -->
+        <div class="color-picker-wrapper">
+          <button class="color-btn color-picker-btn" id="colorPickerBtn" title="Pick any color">
+            <input type="color" id="colorPicker" value="#ff006e">
+          </button>
+        </div>
+      </div>
 
-        <!-- Control Panel -->
+      <!-- Controls Panel - Always Visible on Right -->
+      <aside class="controls-sidebar">
         <div class="controls-panel">
+          <!-- Brush Type -->
+          <div class="control-section">
+            <label class="control-label">Brush Type</label>
+            <div class="brush-type-grid">
+              <button class="brush-type-btn active" data-brush="regular">
+                <span class="brush-icon">●</span>
+                <span class="brush-label">Regular</span>
+              </button>
+              <button class="brush-type-btn" data-brush="precise">
+                <span class="brush-icon">•</span>
+                <span class="brush-label">Precise</span>
+              </button>
+            </div>
+          </div>
+
           <!-- Brush Size -->
           <div class="control-section">
             <label class="control-label">
@@ -97,6 +119,6 @@
   </div>
 
   <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
-  <script src="./script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>

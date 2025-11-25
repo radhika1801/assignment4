@@ -1,7 +1,7 @@
 // Configuration
 const CONFIG = {
   socketURL: 'http://localhost:3000',
-  canvasSize: 600,
+  canvasSize: 900,
   colors: [
     '#ef4444',
     '#f97316',
@@ -15,7 +15,7 @@ const CONFIG = {
   ]
 };
 
-// Helper function to darken color for border
+// Helper function to darken color
 function darkenColor(hex, percent) {
   const num = parseInt(hex.replace('#', ''), 16);
   const amt = Math.round(2.55 * percent);
@@ -36,6 +36,7 @@ const state = {
   isDrawing: false,
   currentColor: CONFIG.colors[0],
   brushSize: 15,
+  brushType: 'regular', // 'regular' or 'precise'
   symmetry: 8,
   glowIntensity: 0.7,
   showGuides: true,
@@ -84,7 +85,7 @@ function setupSocket() {
   
   state.socket.on('draw', (data) => {
     state.strokes.push(data.stroke);
-    if (state.showParticles) {
+    if (state.showParticles && data.stroke.brushType === 'regular') {
       createParticlesBurst(data.stroke.x, data.stroke.y, data.stroke.color);
     }
     redrawCanvas();
@@ -99,6 +100,16 @@ function setupSocket() {
 
 // Controls Setup
 function setupControls() {
+  // Brush type
+  const brushTypeButtons = document.querySelectorAll('.brush-type-btn');
+  brushTypeButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      brushTypeButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.brushType = btn.dataset.brush;
+    });
+  });
+
   // Brush size
   const brushSlider = document.getElementById('brushSize');
   const brushValue = document.getElementById('brushValue');
@@ -163,10 +174,7 @@ function initColorPalette() {
     const btn = document.createElement('button');
     btn.className = 'color-btn' + (index === 0 ? ' active' : '');
     btn.style.background = color;
-    
-    // Set border to darker version of the color
-    const darkerColor = darkenColor(color, 30);
-    btn.style.borderColor = darkerColor;
+    btn.style.borderColor = darkenColor(color, 30);
     
     btn.addEventListener('click', () => {
       document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
@@ -175,6 +183,22 @@ function initColorPalette() {
     });
     
     palette.appendChild(btn);
+  });
+
+  // Color picker
+  const colorPicker = document.getElementById('colorPicker');
+  const colorPickerBtn = document.getElementById('colorPickerBtn');
+  
+  colorPicker.addEventListener('input', (e) => {
+    state.currentColor = e.target.value;
+    document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+    colorPickerBtn.classList.add('active');
+  });
+
+  colorPicker.addEventListener('change', (e) => {
+    state.currentColor = e.target.value;
+    document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+    colorPickerBtn.classList.add('active');
   });
 }
 
@@ -226,12 +250,14 @@ function draw(e) {
     color: state.currentColor,
     size: state.brushSize,
     pattern: state.currentPattern,
+    brushType: state.brushType,
     timestamp: Date.now()
   };
   
   state.strokes.push(stroke);
   
-  if (state.showParticles) {
+  // Only create particles for regular brush
+  if (state.showParticles && state.brushType === 'regular') {
     createParticlesBurst(x, y, state.currentColor);
   }
   
@@ -271,21 +297,17 @@ function saveImage() {
 function redrawCanvas() {
   const ctx = state.ctx;
   
-  // Clear canvas
   ctx.fillStyle = '#FFFFFF';
   ctx.fillRect(0, 0, CONFIG.canvasSize, CONFIG.canvasSize);
   
-  // Draw guides
   if (state.showGuides) {
     drawGuides(ctx);
   }
   
-  // Draw all strokes
   state.strokes.forEach(stroke => {
     drawSymmetricPattern(ctx, stroke);
   });
   
-  // Draw particles
   state.particles.forEach(particle => {
     drawParticle(ctx, particle);
   });
@@ -300,7 +322,6 @@ function drawGuides(ctx) {
   ctx.lineWidth = 1;
   ctx.setLineDash([5, 5]);
   
-  // Radial lines
   for (let i = 0; i < state.symmetry; i++) {
     const angle = (Math.PI * 2 / state.symmetry) * i;
     ctx.beginPath();
@@ -312,7 +333,6 @@ function drawGuides(ctx) {
     ctx.stroke();
   }
   
-  // Circles
   const circleCount = 6;
   for (let i = 1; i <= circleCount; i++) {
     const radius = (maxRadius / circleCount) * i;
@@ -330,6 +350,10 @@ function drawSymmetricPattern(ctx, stroke) {
   const relX = stroke.x - centerX;
   const relY = stroke.y - centerY;
   
+  // Precise brush: half size, no glow
+  const actualSize = stroke.brushType === 'precise' ? stroke.size * 0.5 : stroke.size;
+  const useGlow = stroke.brushType === 'regular' && state.glowIntensity > 0;
+  
   for (let i = 0; i < state.symmetry; i++) {
     const angle = (Math.PI * 2 / state.symmetry) * i;
     const cos = Math.cos(angle);
@@ -337,21 +361,20 @@ function drawSymmetricPattern(ctx, stroke) {
     const x = centerX + (relX * cos - relY * sin);
     const y = centerY + (relX * sin + relY * cos);
     
-    // Draw glow
-    if (state.glowIntensity > 0) {
-      const gradient = ctx.createRadialGradient(x, y, 0, x, y, stroke.size * 2.5);
+    // Draw glow only for regular brush
+    if (useGlow) {
+      const gradient = ctx.createRadialGradient(x, y, 0, x, y, actualSize * 2.5);
       gradient.addColorStop(0, stroke.color + 'AA');
       gradient.addColorStop(0.5, stroke.color + Math.floor(state.glowIntensity * 100).toString(16).padStart(2, '0'));
       gradient.addColorStop(1, stroke.color + '00');
       
       ctx.fillStyle = gradient;
       ctx.beginPath();
-      ctx.arc(x, y, stroke.size * 2.5, 0, Math.PI * 2);
+      ctx.arc(x, y, actualSize * 2.5, 0, Math.PI * 2);
       ctx.fill();
     }
     
-    // Draw pattern
-    drawPattern(ctx, stroke.pattern, x, y, stroke.size, stroke.color);
+    drawPattern(ctx, stroke.pattern, x, y, actualSize, stroke.color);
   }
 }
 
@@ -365,15 +388,12 @@ function drawPattern(ctx, pattern, x, y, size, color) {
       ctx.arc(x, y, size, 0, Math.PI * 2);
       ctx.fill();
       break;
-      
     case 'flower':
       drawFlower(ctx, x, y, size, color);
       break;
-      
     case 'star':
       drawStar(ctx, x, y, size, color);
       break;
-      
     case 'heart':
       drawHeart(ctx, x, y, size, color);
       break;
@@ -387,23 +407,17 @@ function drawFlower(ctx, x, y, size, color) {
   
   ctx.fillStyle = color;
   
-  // Draw petals
   for (let i = 0; i < petals; i++) {
     const angle = (Math.PI * 2 / petals) * i;
-    
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(angle);
-    
-    // Petal shape (elongated ellipse)
     ctx.beginPath();
     ctx.ellipse(0, -size * 0.7, petalWidth, petalLength, 0, 0, Math.PI * 2);
     ctx.fill();
-    
     ctx.restore();
   }
   
-  // Center circle
   ctx.beginPath();
   ctx.arc(x, y, size * 0.4, 0, Math.PI * 2);
   ctx.fill();
@@ -439,32 +453,12 @@ function drawHeart(ctx, x, y, size, color) {
   ctx.beginPath();
   
   const topCurveHeight = size * 0.3;
-  
   ctx.moveTo(x, y + size * 0.3);
   
-  // Left side
-  ctx.bezierCurveTo(
-    x, y - topCurveHeight,
-    x - size, y - topCurveHeight,
-    x - size, y + size * 0.3
-  );
-  ctx.bezierCurveTo(
-    x - size, y + size * 0.8,
-    x - size * 0.5, y + size * 1.2,
-    x, y + size * 1.5
-  );
-  
-  // Right side
-  ctx.bezierCurveTo(
-    x + size * 0.5, y + size * 1.2,
-    x + size, y + size * 0.8,
-    x + size, y + size * 0.3
-  );
-  ctx.bezierCurveTo(
-    x + size, y - topCurveHeight,
-    x, y - topCurveHeight,
-    x, y + size * 0.3
-  );
+  ctx.bezierCurveTo(x, y - topCurveHeight, x - size, y - topCurveHeight, x - size, y + size * 0.3);
+  ctx.bezierCurveTo(x - size, y + size * 0.8, x - size * 0.5, y + size * 1.2, x, y + size * 1.5);
+  ctx.bezierCurveTo(x + size * 0.5, y + size * 1.2, x + size, y + size * 0.8, x + size, y + size * 0.3);
+  ctx.bezierCurveTo(x + size, y - topCurveHeight, x, y - topCurveHeight, x, y + size * 0.3);
   
   ctx.closePath();
   ctx.fill();
