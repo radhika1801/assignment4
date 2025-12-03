@@ -1,6 +1,6 @@
 // Configuration
 const CONFIG = {
-  socketURL: 'http://localhost:3000',
+  socketURL: 'https://assignment4-1-uq2o.onrender.com',
   canvasSize: 900,
   colors: [
     '#ef4444',

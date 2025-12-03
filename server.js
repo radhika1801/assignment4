@@ -8,33 +8,30 @@ const PORT = process.env.PORT || 3000;
 const app = express();
 const server = http.createServer(app);
 
-// Enable CORS so your GH Pages or React app can connect
+// Serve your docs folder (index.html, style.css, main.js) if you want Render to serve the frontend too
+app.use(express.static("docs"));
+
+// Socket.io server with CORS for your GH Pages frontend
 const io = new Server(server, {
   cors: {
-    origin: "*",             // you can restrict this later
+    origin: "https://radhika1801.github.io", // your GH Pages domain
     methods: ["GET", "POST"]
+    // You can also use origin: "*" for testing
   }
 });
 
-app.use(express.static("docs"));
-
 io.on("connection", (socket) => {
-  console.log("New user connected:", socket.id);
+  console.log("User connected: " + socket.id);
 
   socket.on("draw", (data) => {
-    // rebroadcast to everyone except the sender
     socket.broadcast.emit("draw", data);
   });
 
-  // when a client clears their canvas, notify other clients to clear as well
-  socket.on("clear", () => {
-    // rebroadcast clear to everyone except the sender
-    socket.broadcast.emit("clear");
-  });
-
   socket.on("disconnect", () => {
-    console.log("User disconnected:", socket.id);
+    console.log("User disconnected: " + socket.id);
   });
 });
 
-server.listen(PORT, "0.0.0.0", () => console.log(`Server running on port ${3000}`));
+server.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
